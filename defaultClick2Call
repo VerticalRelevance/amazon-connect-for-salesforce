@@ -1,0 +1,12 @@
+try {
+  // Set the country code
+  let countryCode = 'US';
+  // Format the contact phone number in E164 format
+  let e164Number = ac.Utils.Common.formatPhoneNumberE164(payload.number, countryCode);
+  // Dial the E164 formatted phone number
+  await ac.Utils.Agent.dialNumber(e164Number);
+}
+  catch (err) {
+  // Log the error if one is thrown
+  ac.Utils.Log.error(err);
+}
