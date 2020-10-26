@@ -1,0 +1,54 @@
+// Get the contact type (inbound, outbound, callback)
+let contactType = await
+ac.Utils.Contact.getContactType(contact);
+// Get the queue name
+let queueName = ac.Utils.Contact.getQueue(contact).name;
+// Get the phone number
+let phoneNumber = ac.Utils.Agent.getAgentDeskphoneNumber();
+// Get the contact record ID of the caller
+let contactRecordId = ac.Utils.Contact.getAttributeValue(contact, 'acsf-screenpop-record');
+// This if statement checks the contact type 
+// This is a great way to split Inbound calls, outbound calls, and callbacks to perform different actions based on the type of call
+// Inbound calls would typically have a case created to represent the customer’s issue and a task created to represent the actual call
+if(contactType == 'Inbound')
+{
+
+// Save the task while saving the return value
+let caseResult = await ac.Utils.Salesforce.saveLog('Case', null,
+{
+// Set the Contact ID 
+amazonconnect__AC_Contact_Id__c: contact.getContactId(),
+ //CallType: 'Inbound',
+ //Type: 'Call',
+ Type: 'Inbound Call',
+ //IsClosed: false,
+ Status: 'New',
+// Set the subject of the case using the queue value provided by the customer to the IVR that routes the call to the appropriate queue
+ Subject: contactType +  ' - ' + queueName,
+ //TaskSubtype: 'Call'
+ ContactId : contactRecordId
+});
+// Save the task while saving the return value
+let taskResult = await ac.Utils.Salesforce.saveLog('Task', null,
+{
+// Set the contact id  
+CallObject: contact.getContactId(),
+// Specify the call type
+CallType: 'Inbound',
+ Type: 'Call',
+// Set the status of the task
+IsClosed: false,
+ Status: 'In Progress',
+//Set the subject of the task using the queue value provided by the customer to the IVR that routes the call to the appropriate queue 
+Subject: 'Call - ' + queueName,
+ TaskSubtype: 'Call',
+// Connect the task to the case 
+WhatId: caseResult.recordId
+});
+
+// If case creation was successful, pop the task
+if (caseResult && caseResult.recordId) {
+ caseId = caseResult.recordId;
+ ac.Utils.Salesforce.screenPopObject(caseId);
+}
+}
