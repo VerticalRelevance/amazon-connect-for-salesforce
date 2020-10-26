@@ -1,0 +1,20 @@
+// Get the contact type (inbound, outbound, callback) 
+let contactType = await ac.Utils.Contact.getContactType(contact); 
+// Get the queue name 
+let queueName = ac.Utils.Contact.getQueue(contact).name; 
+// Save the task while saving the return value 
+let taskResult = await ac.Utils.Salesforce.saveLog('Task', null, 
+{ 
+CallObject: contact.getContactId(), 
+CallType: 'Inbound', 
+Type: 'Call', 
+IsClosed: false, 
+Status: 'In Progress', 
+Subject: contactType + ' - ' + queueName, 
+TaskSubtype: 'Call' 
+}); 
+
+// If task creation was successful, pop the task 
+if (taskResult && taskResult.recordId) 
+{ taskId = taskResult.recordId; ac.Utils.Salesforce.screenPopObject(taskId);
+ }
